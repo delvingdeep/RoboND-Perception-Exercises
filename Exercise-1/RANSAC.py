@@ -63,13 +63,21 @@ pcl.save(extracted_inliners, 'extracted_inliners.pcd')
 extracted_inliners = cloud_filtered.extract(inliners, negative=True)
 pcl.save(extracted_inliners, 'extracted_outliers.pcd')
 
-# Save pcd for table
-# pcl.save(cloud, filename)
 
+#### Statistical outlier filter ####   ----> to remove additional noise if any
 
-# Extract outliers
+# create StatisticalOutlierFilter object
+outlier_filter = cloud_filtered.make_statistical_outlier_filter()
 
+# set number of neighbouring points
+outlier_filter.set_mean_k(50)
 
-# Save pcd for tabletop objects
+# set threshold sclae factor
+x = 1.0
 
+# set global mean and std deviation
+outlier_filter.set_std_dev_mul_thresh(x)
 
+# call filter function to filter outlier
+cloud_filtered = outlier_filter.filter()
+pcl.save(cloud_filtered, 'outlier_filter.pcd')
