@@ -8,26 +8,48 @@ from pcl_helper import *
 # Callback function for your Point Cloud Subscriber
 def pcl_callback(pcl_msg):
 
-    # TODO: Convert ROS msg to PCL data
+    # DONE: Convert ROS msg to PCL data
+    pcl_data = ros_to_pcl(pcl_msg)
 
-    # TODO: Voxel Grid Downsampling
+    # DONE: Voxel Grid Downsampling
+    vox = pcl_data.make_voxel_grid_filter()
+    LEAF_SIZE = 0.01
+    vox.set_leaf_size(LEAF_SIZE, LEAF_SIZE, LEAF_SIZE)
+    filtered_cloud = vox.filter()
 
-    # TODO: PassThrough Filter
+    # DONE: PassThrough Filter
+    passthrough = filtered_cloud.make_passthrough_filter()
+    filter_axis = 'z'
+    passthrough.set_filter_field_name(filter_axis)
+    axis_min = 0.5
+    axis_max = 1.6
+    passthrough.set_filter_limits(axis_min, axis_max)
+    filtered_cloud = passthrough.filter()
 
+    # DONE: RANSAC Plane Segmentation
+    seg = filtered_cloud.make_segmenter()
+    seg.set_model_type(pcl.SACMODEL_PLANE)
+    seg.set_method_type(pcl.SAC_RANSAC)
+    max_distance = 0.01
+    seg.set_distance_threshold(max_distance)
+    inliers, coefficients = seg.segment()
 
-    # TODO: RANSAC Plane Segmentation
-
-    # TODO: Extract inliers and outliers
+    # DONE: Extract inliers and outliers
+    cloud_table = filtered_cloud.extract(inliers, negative=False)
+    cloud_objects = filtered_cloud.extract(inliers, negative=True)
 
     # TODO: Euclidean Clustering
 
     # TODO: Create Cluster-Mask Point Cloud to visualize each cluster separately
 
-    # TODO: Convert PCL data to ROS messages
+    # DONE: Convert PCL data to ROS messages
+    ros_cloud_objects = pcl_to_ros(cloud_objects)
+    ros_cloud_table = pcl_to_ros(cloud_table)
 
     # DONE: Publish ROS messages
-    pcl_objects_pub.publish(pcl_msg)
-    pcl_table_pub.publish(pcl_msg)
+    pcl_objects_pub.publish(ros_cloud_objects)
+    pcl_table_pub.publish(ros_cloud_table)
+
 
 if __name__ == '__main__':
 
